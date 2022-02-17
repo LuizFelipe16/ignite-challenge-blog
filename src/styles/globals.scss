@@ -1,7 +1,28 @@
+:root {
+  --gray-100: #f8f8f8;
+  --gray-200: #d7d7d7;
+  --gray-300: #bbb;
+  --gray-700: #1A1D23;
+
+  --highlight: #ff57b2;
+  --background: var(--gray-700);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-// TODO
+body {
+  background: var(--background);
+  overflow-x: hidden;
+}
+
+h1, h2, h3, p, button, a, time, span {
+  font-family: 'Inter';
+}
+
+.paragraph, .list-item {
+  color: #fff;
+}
