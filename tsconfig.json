@@ -22,7 +22,9 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "**/*.spec.tsx"
+    "**/*.spec.tsx",
+    "src/pages/api/exit-preview.js",
+    "src/pages/api/preview.ts"
   ],
   "exclude": [
     "node_modules"

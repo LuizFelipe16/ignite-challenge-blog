@@ -13,6 +13,10 @@ export default class MyDocument extends Document {
           />
 
           <link rel="shortcut icon" href="/Logo.svg" type="image/svg" />
+
+          {/* <script async defer src={`//static.cdn.prismic.io/prismic.js?repo=myblogs&new=true`} /> */}
+
+          <script async defer src="https://static.cdn.prismic.io/prismic.js?new=true&repo=myblogs"></script>
         </Head>
         <body>
           <Main />

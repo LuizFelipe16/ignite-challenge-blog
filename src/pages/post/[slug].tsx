@@ -13,6 +13,7 @@ import { getPrismicClient } from '../../services/prismic';
 
 import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
+import Link from 'next/link';
 
 // interface Post {
 //   first_publication_date: string | null;
@@ -30,6 +31,7 @@ import styles from './post.module.scss';
 // }
 
 interface Post {
+  last_publication_date: string | null;
   first_publication_date: string | null;
   data: {
     title: string;
@@ -46,9 +48,14 @@ interface Post {
 
 interface PostProps {
   post: Post;
+  preview?: boolean;
+  more_posts: {
+    prev_post_id?: string | null;
+    next_post_id?: string | null;
+  }
 }
 
-export default function Post({ post }: PostProps) {
+export default function Post({ post, preview, more_posts }: PostProps) {
   const router = useRouter();
 
   function calculate() {
@@ -94,6 +101,30 @@ export default function Post({ post }: PostProps) {
     return null;
   }
 
+  function Comments() {
+    return (
+      <section
+        style={{ width: '100%' }}
+        ref={
+          element => {
+            if (!element) {
+              return
+            }
+
+            const scriptElement = document.createElement('script')
+            scriptElement.setAttribute('src', 'https://utteranc.es/client.js')
+            scriptElement.setAttribute('repo', 'LuizFelipe16/spaceblog-comments')
+            scriptElement.setAttribute('issue-term', 'pathname')
+            scriptElement.setAttribute('theme', 'photon-dark')
+            scriptElement.setAttribute('crossorigin', 'anonymous')
+            scriptElement.setAttribute('async', 'true')
+            element.replaceChildren(scriptElement)
+          }
+        }
+      />
+    );
+  }
+
   if (router.isFallback) {
     return <h1>Carregando...</h1>
   }
@@ -130,8 +161,19 @@ export default function Post({ post }: PostProps) {
             </div>
           </div>
 
+          {
+            !!post.last_publication_date && (
+              <p className={styles.last_publication_date}>
+                {format(
+                  new Date(post.last_publication_date),
+                  "'* editado em' d MMM yyyy', ás' KK':'mm",
+                  { locale: ptBR }
+                )}
+              </p>
+            )
+          }
+
           {post.data.content.map(content => {
-            // console.log(content);
             return (
               <div key={content.heading} className={styles.content}>
                 <h1>{content.heading}</h1>
@@ -143,7 +185,30 @@ export default function Post({ post }: PostProps) {
               </div>
             )
           })}
+
+          <hr className={styles.line_posts_more} />
+          <div className={styles.posts_more}>
+            <div>
+              <h2>{more_posts?.prev_post_id}</h2>
+              <Link href={`/post/${more_posts?.prev_post_id}`}><a>Post Anterior</a></Link>
+            </div>
+
+            <div>
+              <h2>{more_posts?.next_post_id}</h2>
+              <Link href={`/post/${more_posts?.next_post_id}`}><a>Próximo Post</a></Link>
+            </div>
+          </div>
+
+          {preview && (
+            <aside>
+              <Link href="/api/exit-preview">
+                <a>Sair do modo Preview</a>
+              </Link>
+            </aside>
+          )}
         </article>
+
+        {Comments()}
       </main>
     </>
   );
@@ -168,17 +233,18 @@ export const getStaticPaths: GetStaticPaths = async () => {
   }
 }
 
-export const getStaticProps: GetStaticProps = async ({ params }) => {
+export const getStaticProps: GetStaticProps = async ({ params, preview = false, previewData }) => {
   const prismic = getPrismicClient();
 
   const { slug } = params;
 
-  const response = await prismic.getByUID('posts', String(slug), {});
-
-  // console.log(response.data);
+  const response = await prismic.getByUID('posts', String(slug), {
+    ref: previewData?.ref ?? null,
+  });
 
   const post = {
     uid: response.uid,
+    last_publication_date: response?.last_publication_date,
     first_publication_date: response.first_publication_date,
     data: {
       title: response.data.title,
@@ -194,9 +260,24 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     }
   }
 
+  const postsResponse = await prismic.query([
+    Prismic.Predicates.at('document.type', 'posts')
+  ], {
+    pageSize: 3
+  });
+
+  console.log(postsResponse);
+
+  const more_posts = {
+    prev_post_id: postsResponse?.results[0]?.uid,
+    next_post_id: postsResponse?.results[1]?.uid,
+  }
+
   return {
     props: {
-      post
+      post,
+      preview,
+      more_posts
     }
   }
 };
